@@ -1,9 +1,13 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
+import { Toaster, toast } from 'sonner';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function Topbar() {
+  const { isLoggedIn, logout } = useAuth();
   const [theme, setTheme] = useState('light');
 
   const toggleTheme = () => {
@@ -39,10 +43,37 @@ export default function Topbar() {
         </div>
         
         <div className="flex items-center space-x-4">
+          {isLoggedIn ? (
+            <>
+              <button 
+                onClick={logout}
+                className="px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
+              >
+                로그아웃
+              </button>
+              <div className="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center text-white cursor-pointer">
+                U
+              </div>
+            </>
+          ) : (
+            <>
+              <Link href="/signin">
+                <button className="px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800">
+                  로그인
+                </button>
+              </Link>
+              <Link href="/signup">
+                <button className="px-3 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800">
+                  회원가입
+                </button>
+              </Link>
+            </>
+          )}
+          
           <button 
             onClick={toggleTheme} 
             className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white"
-            aria-label="Toggle theme"
+            aria-label="테마 변경"
           >
             {theme === 'light' ? (
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -63,15 +94,18 @@ export default function Topbar() {
             )}
           </button>
           
-          <button className="px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800">
-            Login
-          </button>
-          
-          <button className="px-3 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800">
-            Sign Up
+          <button className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white relative">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+            </svg>
+            <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-xs text-white">
+              3
+            </span>
           </button>
         </div>
       </div>
+      <Toaster richColors position="top-center" />
     </header>
   );
 }
