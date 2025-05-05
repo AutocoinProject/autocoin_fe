@@ -11,8 +11,6 @@ const navigationItems = [
   { name: 'Transactions', path: '/transactions', icon: '/icons/transaction.svg' },
   { name: 'Wallet', path: '/wallet', icon: '/icons/wallet.svg' },
   { name: 'News', path: '/news', icon: '/icons/news.svg' },
-  { name: 'Backtest', path: '/backtest', icon: '/icons/chart.svg' },
-  { name: 'Bot Trading', path: '/bot-trading', icon: '/icons/chart.svg' },
   { name: 'Mailbox', path: '/mailbox', icon: '/icons/mail.svg' },
   { name: 'Settings', path: '/settings', icon: '/icons/settings.svg' },
 ];
