@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <circle cx="60" cy="60" r="60" fill="#3B82F6"/>
+  
+  <!-- Inner circle -->
+  <circle cx="60" cy="60" r="48" fill="#2563EB"/>
+  
+  <!-- Coin symbol -->
+  <circle cx="60" cy="60" r="36" fill="#1D4ED8" stroke="white" stroke-width="3"/>
+  
+  <!-- Arrow shapes -->
+  <path d="M48 40L72 40L72 64" stroke="white" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M72 40L42 70" stroke="white" stroke-width="6" stroke-linecap="round"/>
+  
+  <path d="M55 75L40 75C40 75 45 90 60 90C75 90 80 75 80 75L65 75" stroke="white" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
