@@ -10,9 +10,12 @@
   },
   "dependencies": {
     "autocoin_fe": "file:",
+    "axios": "^1.9.0",
+    "framer-motion": "^12.9.4",
     "next": "15.3.1",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "sonner": "^2.0.3"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
