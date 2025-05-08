@@ -17,6 +17,9 @@ const navigationItems = [
   // Backtest Page
   { name: 'Backtest', path: '/backtest', icon: '/icons/backtest.svg' },
   
+  // Board Page
+  { name: 'Board', path: '/board', icon: '/icons/news.svg' },
+
   { name: 'Transactions', path: '/transactions', icon: '/icons/transaction.svg' },
   { name: 'Wallet', path: '/wallet', icon: '/icons/wallet.svg' },
   { name: 'News', path: '/news', icon: '/icons/news.svg' },
