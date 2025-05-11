@@ -1,6 +1,7 @@
 "use client"; // Add this for useState
 
 import { useState } from 'react'; // Import useState
+import Link from 'next/link'; // Import Link
 
 // Define sample categories
 const categories = [
@@ -19,13 +20,15 @@ export default function BoardPage() {
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
           게시판
         </h1>
-        {/* 예시: 글쓰기 버튼 - 카테고리 옆이나 다른 곳으로 옮길 수 있습니다. */}
-        <button
-          type="button"
-          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-        >
-          새 글 작성
-        </button>
+        {/* "새 글 작성" 버튼을 Link로 변경 */}
+        <Link href="/board/new" passHref>
+          <button
+            type="button"
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          >
+            새 글 작성
+          </button>
+        </Link>
       </div>
 
       {/* Category Tabs/Buttons */}

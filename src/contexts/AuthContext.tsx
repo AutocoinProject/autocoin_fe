@@ -3,14 +3,24 @@
 import React, { createContext, useState, useContext, useEffect, ReactNode, useCallback } from 'react';
 import { toast } from 'sonner';
 
+// 사용자 정보 타입 정의
+interface User {
+  id: string;
+  email: string;
+  nickname: string;
+  profileImage?: string;
+}
+
 // 1. 컨텍스트 타입 정의
 interface AuthContextType {
   isLoggedIn: boolean;
-  login: (token: string) => void;
+  user: User | null;
+  login: (token: string, userData?: User) => void;
   logout: () => void;
+  updateUser: (userData: User) => void;
 }
 
-// 2. 컨텍스트 생성 (기본값은 undefined 또는 적절한 초기값 설정)
+// 2. 컨텍스트 생성
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // 3. 컨텍스트 제공자(Provider) 컴포넌트 생성
@@ -20,34 +30,53 @@ interface AuthProviderProps {
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+  const [user, setUser] = useState<User | null>(null);
 
-  // 컴포넌트 마운트 시 localStorage 확인 (기존 Topbar 로직 이동)
+  // 컴포넌트 마운트 시 localStorage 확인
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
+    const userData = localStorage.getItem('user');
+    
     if (token) {
       setIsLoggedIn(true);
+      if (userData) {
+        try {
+          setUser(JSON.parse(userData));
+        } catch (error) {
+          console.error('사용자 정보 파싱 오류:', error);
+        }
+      }
     }
   }, []);
 
   // 로그인 함수
-  const login = useCallback((token: string) => {
+  const login = useCallback((token: string, userData?: User) => {
     localStorage.setItem('accessToken', token);
     setIsLoggedIn(true);
-    // 로그인 성공 알림 (선택 사항)
-    // toast.success("로그인 되었습니다."); 
+    
+    if (userData) {
+      localStorage.setItem('user', JSON.stringify(userData));
+      setUser(userData);
+    }
   }, []);
 
-  // 로그아웃 함수 (기존 Topbar 로직 + 알림)
+  // 로그아웃 함수
   const logout = useCallback(() => {
     localStorage.removeItem('accessToken');
+    localStorage.removeItem('user');
     setIsLoggedIn(false);
+    setUser(null);
     toast.success("로그아웃 되었습니다.");
-    // 필요시 추가 처리 (예: 로그인 페이지로 리다이렉트)
-    // router.push('/signin'); // Context에서는 router 직접 사용 어려움. 필요시 props나 다른 방식 사용
+  }, []);
+
+  // 사용자 정보 업데이트 함수
+  const updateUser = useCallback((userData: User) => {
+    localStorage.setItem('user', JSON.stringify(userData));
+    setUser(userData);
   }, []);
 
   // Provider가 제공할 값
-  const value = { isLoggedIn, login, logout };
+  const value = { isLoggedIn, user, login, logout, updateUser };
 
   return (
     <AuthContext.Provider value={value}>
@@ -56,7 +85,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   );
 };
 
-// 4. 커스텀 훅 생성 (쉽게 컨텍스트 사용하기 위함)
+// 4. 커스텀 훅
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
   if (context === undefined) {
