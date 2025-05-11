@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import axios from 'axios';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function SignInPage() {
@@ -13,7 +13,17 @@ export default function SignInPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { login } = useAuth();
+
+  // OAuth2 리디렉션 처리
+  useEffect(() => {
+    const token = searchParams.get('token');
+    if (token) {
+      login(token);
+      router.push('/dashboard');
+    }
+  }, [searchParams, login, router]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -68,6 +78,45 @@ export default function SignInPage() {
         setError("로그인 중 예상치 못한 오류가 발생했습니다.");
       }
     } finally {
+      setLoading(false);
+    }
+  };
+
+  // 소셜 로그인 핸들러 수정
+  const handleSocialLogin = async (provider: 'google' | 'kakao') => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      console.log(`${provider} 로그인 URL 요청 시작...`);
+      
+      const response = await fetch(`/api/v1/auth/oauth2/${provider}`, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json'
+        }
+      });
+
+      console.log(`${provider} 로그인 URL 응답 상태:`, response.status);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`${provider} 로그인 URL 응답 에러:`, errorText);
+        throw new Error(`서버 응답 오류 (${response.status}): ${errorText || '알 수 없는 오류'}`);
+      }
+
+      const data = await response.json();
+      console.log(`${provider} 로그인 URL 응답 데이터:`, data);
+      
+      if (!data.url) {
+        throw new Error(`${provider} 로그인 URL을 찾을 수 없습니다.`);
+      }
+
+      console.log(`리디렉션 URL:`, data.url);
+      window.location.href = data.url;
+    } catch (err: any) {
+      console.error(`${provider} 로그인 리디렉션 실패:`, err);
+      setError(err.message || `${provider} 로그인을 시작하는데 실패했습니다. 잠시 후 다시 시도해주세요.`);
       setLoading(false);
     }
   };
@@ -159,26 +208,42 @@ export default function SignInPage() {
          <div className="mt-6 space-y-3">
            <div>
              <button
-               onClick={() => console.log('Sign in with Google clicked')} // Keep console log for now
-               className="inline-flex w-full items-center justify-center rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 py-2 px-4 text-sm font-medium text-gray-500 dark:text-gray-300 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
+               onClick={() => handleSocialLogin('google')}
+               disabled={loading}
+               className={`inline-flex w-full items-center justify-center rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 py-2 px-4 text-sm font-medium text-gray-500 dark:text-gray-300 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
              >
                <span className="sr-only">Sign in with Google</span>
-               <svg className="mr-2 h-5 w-5" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="google" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512">
-                 <path fill="currentColor" d="M488 261.8C488 403.3 381.5 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z"></path>
-               </svg>
-               Sign in with Google
+               {loading ? (
+                 <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                 </svg>
+               ) : (
+                 <svg className="mr-2 h-5 w-5" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="google" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512">
+                   <path fill="currentColor" d="M488 261.8C488 403.3 381.5 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z"></path>
+                 </svg>
+               )}
+               {loading ? '처리 중...' : 'Sign in with Google'}
              </button>
            </div>
            <div>
              <button
-               onClick={() => console.log('Sign in with Kakao clicked')} // Keep console log for now
-               className="inline-flex w-full items-center justify-center rounded-md border border-transparent bg-[#FEE500] py-2 px-4 text-sm font-medium text-black shadow-sm hover:bg-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
+               onClick={() => handleSocialLogin('kakao')}
+               disabled={loading}
+               className={`inline-flex w-full items-center justify-center rounded-md border border-transparent bg-[#FEE500] py-2 px-4 text-sm font-medium text-black shadow-sm hover:bg-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
              >
                <span className="sr-only">Sign in with Kakao</span>
-               <svg className="mr-2 h-5 w-5" aria-hidden="true" focusable="false" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 38 36.7">
-                 <path fill="currentColor" d="M19.4 17.2c-.7 0-1.4-.1-2.1-.4-.7-.2-1.3-.6-1.8-1-.5-.4-1-.9-1.3-1.5s-.5-1.3-.5-2.1c0-1.3.5-2.4 1.4-3.4.9-1 2.1-1.4 3.4-1.4 1.3 0 2.4.5 3.4 1.4.9.9 1.4 2.1 1.4 3.4 0 .8-.2 1.5-.5 2.1-.4.6-.9 1.1-1.3 1.5-.5.4-1.1.7-1.8 1-.7.2-1.4.4-2.1.4zm10.6 8.7c.6-.6.9-1.2 1.1-2 .2-.7.2-1.5.1-2.3-.1-.8-.4-1.6-.9-2.3-.5-.7-.9-1.3-1.5-1.9-.6-.6-1.2-.9-2-1.1-.7-.2-1.5-.2-2.3-.1-.8.1-1.6.4-2.3.9-.7.5-1.3.9-1.9 1.5-.6.6-.9 1.2-1.1 2-.2.7-.2 1.5-.1 2.3.1.8.4 1.6.9 2.3.5.7.9 1.3 1.5 1.9.6.6 1.2.9 2 1.1.7.2 1.5.2 2.3.1.8-.1 1.6-.4 2.3-.9.7-.5 1.3-.9 1.9-1.5zm-21.1-1.8c.6.6.9 1.2 1.1 2 .2.7.2 1.5.1 2.3-.1.8-.4 1.6-.9 2.3-.5.7-.9 1.3-1.5 1.9-.6.6-1.2.9-2 1.1-.7.2-1.5.2-2.3.1-.8-.1-1.6-.4-2.3-.9-.7-.5-1.3-.9-1.9-1.5-.6-.6-.9-1.2-1.1-2-.2-.7-.2-1.5-.1-2.3.1-.8.4 1.6.9-2.3.5-.7.9-1.3 1.5-1.9.6-.6 1.2-.9 2-1.1.7-.2 1.5-.2 2.3-.1.8.1 1.6.4 2.3.9.7.5 1.3.9 1.9 1.5zm19.8-15.4C28.9 6.8 27.1 6 25 5.7c-.7-.1-1.4-.1-2.1-.1h-.3c-1 0-2.1.2-3.1.7-1.1.5-2 1.1-2.9 2s-1.5 1.9-2 2.9-.7 2.1-.7 3.1v.3c0 .7.1 1.4.1 2.1.1 2.1.9 3.9 2.3 5.4s3.3 2.3 5.4 2.3h.3c.7 0 1.4-.1 2.1-.1 2.1-.1 3.9-.9 5.4-2.3 1.4-1.4 2.3-3.3 2.3-5.4v-.3c0-.7-.1-1.4-.1-2.1z"></path>
-               </svg>
-               Sign in with Kakao
+               {loading ? (
+                 <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-black" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                 </svg>
+               ) : (
+                 <svg className="mr-2 h-5 w-5" aria-hidden="true" focusable="false" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 38 36.7">
+                   <path fill="currentColor" d="M19.4 17.2c-.7 0-1.4-.1-2.1-.4-.7-.2-1.3-.6-1.8-1-.5-.4-1-.9-1.3-1.5s-.5-1.3-.5-2.1c0-1.3.5-2.4 1.4-3.4.9-1 2.1-1.4 3.4-1.4 1.3 0 2.4.5 3.4 1.4.9.9 1.4 2.1 1.4 3.4 0 .8-.2 1.5-.5 2.1-.4.6-.9 1.1-1.3 1.5-.5.4-1.1.7-1.8 1-.7.2-1.4.4-2.1.4zm10.6 8.7c.6-.6.9-1.2 1.1-2 .2-.7.2-1.5.1-2.3-.1-.8-.4-1.6-.9-2.3-.5-.7-.9-1.3-1.5-1.9-.6-.6-.6-1.2-.9-2-1.1-.7-.2-1.5-.2-2.3-.1-.8.1-1.6.4-2.3.9-.7.5-1.3.9-1.9 1.5-.6.6-.9 1.2-1.1 2-.2.7-.2 1.5-.1 2.3.1.8.4 1.6.9 2.3.5.7.9 1.3 1.5 1.9.6.6 1.2.9 2 1.1.7.2 1.5.2 2.3.1.8-.1 1.6-.4 2.3-.9.7-.5 1.3-.9 1.9-1.5zm-21.1-1.8c.6.6.9 1.2 1.1 2 .2.7.2 1.5.1 2.3-.1.8-.4 1.6-.9 2.3-.5.7-.9 1.3-1.5 1.9-.6.6-1.2.9-2 1.1-.7.2-1.5.2-2.3.1-.8-.1-1.6-.4-2.3-.9-.7-.5-1.3-.9-1.9-1.5-.6-.6-.9-1.2-1.1-2-.2-.7-.2-1.5-.1-2.3.1-.8.4 1.6.9-2.3.5-.7.9-1.3 1.5-1.9.6-.6 1.2-.9 2-1.1.7-.2 1.5-.2 2.3-.1.8.1 1.6.4 2.3.9.7.5 1.3.9 1.9 1.5zm19.8-15.4C28.9 6.8 27.1 6 25 5.7c-.7-.1-1.4-.1-2.1-.1h-.3c-1 0-2.1.2-3.1.7-1.1.5-2 1.1-2.9 2s-1.5 1.9-2 2.9-.7 2.1-.7 3.1v.3c0 .7.1 1.4.1 2.1.1 2.1.9 3.9 2.3 5.4s3.3 2.3 5.4 2.3h.3c.7 0 1.4-.1 2.1-.1 2.1-.1 3.9-.9 5.4-2.3 1.4-1.4 2.3-3.3 2.3-5.4v-.3c0-.7-.1-1.4-.1-2.1z"></path>
+                 </svg>
+               )}
+               {loading ? '처리 중...' : 'Sign in with Kakao'}
              </button>
            </div>
          </div>
