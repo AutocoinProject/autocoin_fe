@@ -1,19 +1,39 @@
 "use client";
 
-import { useState, ChangeEvent, FormEvent } from 'react';
+import { useState, ChangeEvent, FormEvent, useEffect } from 'react';
 import { useRouter } from 'next/navigation'; // For navigation after submit
 import ReactMarkdown from 'react-markdown'; // Import ReactMarkdown
+import { useAuth } from '@/contexts/AuthContext';
+import { createPost } from '@/api/post';
+import { toast } from 'sonner';
+
+// 하드코딩된 카테고리 목록
+const CATEGORIES = [
+  { id: 1, name: '금융' },
+  { id: 2, name: '주식' },
+  { id: 3, name: '경제' },
+  { id: 4, name: '코인' }
+] as const;
 
 export default function NewPostPage() {
   const router = useRouter();
+  const { isAuthenticated: isLoggedIn, user } = useAuth();
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
-  const [writer, setWriter] = useState(''); // Consider pre-filling if user is logged in
+  const [writer, setWriter] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [showPreview, setShowPreview] = useState(false); // 미리보기 토글 상태
+  const [categoryId, setCategoryId] = useState<number>(CATEGORIES[0].id); // 기본값을 '금융'으로 설정
+
+  // 로그인한 사용자 정보로 작성자 필드 초기화
+  useEffect(() => {
+    if (isLoggedIn && user) {
+      setWriter(user.username || user.email.split('@')[0]);
+    }
+  }, [isLoggedIn, user]);
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
@@ -35,6 +55,12 @@ export default function NewPostPage() {
     setError(null);
     setSuccessMessage(null);
 
+    if (!isLoggedIn) {
+      toast.error('로그인이 필요합니다.');
+      router.push('/signin');
+      return;
+    }
+
     if (!title || !content || !writer) {
       setError('제목, 내용, 작성자는 필수 항목입니다.');
       setIsLoading(false);
@@ -45,6 +71,7 @@ export default function NewPostPage() {
     formData.append('title', title);
     formData.append('content', content);
     formData.append('writer', writer);
+    formData.append('categoryId', categoryId.toString());
     if (file) {
       formData.append('file', file);
     }
@@ -52,14 +79,14 @@ export default function NewPostPage() {
     const apiUrl = 'http://localhost:8080/api/v1/posts'; 
 
     try {
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        body: formData,
+      await createPost({
+        title: title.trim(),
+        content: content.trim(),
+        writer: writer.trim(),
+        categoryId,
+        file: file || undefined
       });
-
-      if (response.status === 201) {
-        const result = await response.json();
-        setSuccessMessage('게시글이 성공적으로 작성되었습니다! ID: ' + result.id);
+      setSuccessMessage('게시글이 성공적으로 작성되었습니다!');
         setTitle('');
         setContent('');
         setWriter('');
@@ -68,26 +95,6 @@ export default function NewPostPage() {
         setTimeout(() => {
             router.push('/board');
         }, 1500);
-      } else {
-        // 서버가 응답했으나, 성공(201)이 아닌 경우
-        let serverErrorMessage = '글 작성에 실패했습니다.';
-        try {
-            const errorResult = await response.json(); // 서버 에러 메시지를 JSON으로 파싱 시도
-            if (errorResult && errorResult.message) {
-                serverErrorMessage = errorResult.message;
-            } else {
-                // JSON은 파싱되었으나 message 필드가 없는 경우
-                serverErrorMessage = `글 작성에 실패했습니다. (상태 코드: ${response.status})`;
-            }
-            console.error('API Error Response:', errorResult);
-        } catch (jsonParseError) {
-            // 서버 응답이 JSON 형식이 아닌 경우
-            const responseText = await response.text(); // 원본 텍스트 응답을 로깅
-            serverErrorMessage = `글 작성에 실패했습니다. 서버 응답을 처리할 수 없습니다. (상태 코드: ${response.status})`;
-            console.error('API Error: Failed to parse server response as JSON. Status:', response.status, 'Response Text:', responseText);
-        }
-        setError(serverErrorMessage);
-      }
     } catch (err) {
       // fetch 자체가 실패한 경우 (네트워크 오류, 서버 무응답 등)
       console.error('Fetch submission error:', err);
@@ -111,6 +118,22 @@ export default function NewPostPage() {
           새 게시글 작성
         </h1>
         <form onSubmit={handleSubmit} className="space-y-8 bg-white dark:bg-gray-800 p-8 sm:p-10 rounded-xl shadow-2xl"> {/* 내부 간격, 패딩, 그림자 강화 */}
+          <div>
+            <label htmlFor="category" className={labelBaseStyle}>카테고리</label>
+            <select
+              id="category"
+              value={categoryId}
+              onChange={(e) => setCategoryId(Number(e.target.value))}
+              className={`${inputBaseStyle} focus:ring-indigo-500 focus:border-indigo-500`}
+              required
+            >
+              {CATEGORIES.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
+          </div>
           <div>
             <label htmlFor="title" className={labelBaseStyle}>제목</label>
             <input

@@ -2,17 +2,18 @@
 
 import { useState } from 'react'; // Import useState
 import Link from 'next/link'; // Import Link
+import { toast } from 'sonner';
 
-// Define sample categories
-const categories = [
-  { id: 'finance', name: '금융' },
-  { id: 'crypto', name: '코인' },
-  { id: 'stocks', name: '주식' },
-  { id: 'economy', name: '경제' },
-];
+// 하드코딩된 카테고리 목록
+const CATEGORIES = [
+  { id: 1, name: '금융' },
+  { id: 2, name: '주식' },
+  { id: 3, name: '경제' },
+  { id: 4, name: '코인' }
+] as const;
 
 export default function BoardPage() {
-  const [selectedCategory, setSelectedCategory] = useState<string>(categories[0].id); // Default to the first category
+  const [selectedCategory, setSelectedCategory] = useState<number>(CATEGORIES[0].id); // 기본값을 '금융'으로 설정
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
@@ -31,10 +32,10 @@ export default function BoardPage() {
         </Link>
       </div>
 
-      {/* Category Tabs/Buttons */}
+      {/* Category Tabs */}
       <div className="mb-6">
         <div className="flex space-x-1 border-b border-gray-300 dark:border-gray-600">
-          {categories.map((category) => (
+          {CATEGORIES.map((category) => (
             <button
               key={category.id}
               onClick={() => setSelectedCategory(category.id)}
@@ -52,14 +53,13 @@ export default function BoardPage() {
         </div>
       </div>
 
-      {/* 게시판 내용이 여기에 표시됩니다. */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+      {/* 게시판 내용 */}
+      <div>
         <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-gray-200">
-          {categories.find(cat => cat.id === selectedCategory)?.name || '전체 게시글'}
+          {CATEGORIES.find(cat => cat.id === selectedCategory)?.name || '전체 게시글'}
         </h2>
         <p className="text-gray-700 dark:text-gray-300">
-          {/* 여기에 선택된 카테고리의 게시글 목록이 표시됩니다. */}
-          현재 선택된 카테고리는 '{categories.find(cat => cat.id === selectedCategory)?.name}' 입니다.
+          현재 선택된 카테고리는 '{CATEGORIES.find(cat => cat.id === selectedCategory)?.name}' 입니다.
           이곳에 해당 카테고리의 글 목록을 불러와 표시할 예정입니다.
         </p>
       </div>

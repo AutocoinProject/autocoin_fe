@@ -17,13 +17,15 @@ export default function OAuth2RedirectHandler() {
 
     if (token) {
       // 토큰 저장 및 사용자 정보 가져오기
-      login(token);
       fetchUserInfo(token)
-        .then(() => {
+        .then((userData) => {
+          login(token, userData);
           router.push('/dashboard');
         })
         .catch((err) => {
           console.error('사용자 정보 가져오기 실패:', err);
+          // 토큰만 저장하고 대시보드로 이동
+          login(token);
           router.push('/dashboard');
         });
     } else if (error) {
@@ -49,7 +51,6 @@ export default function OAuth2RedirectHandler() {
       }
 
       const userData = await response.json();
-      localStorage.setItem('user', JSON.stringify(userData));
       return userData;
     } catch (error) {
       console.error('사용자 정보 요청 실패:', error);

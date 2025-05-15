@@ -6,31 +6,29 @@ import Image from 'next/image';
 import axios from 'axios';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import { LoginResponse, ErrorResponse, ERROR_MESSAGES } from '@/types/auth';
+import config from '@/config/environment';
+import AuthToast from '@/components/auth/AuthToast';
+
+// API_BASE_URL을 환경 설정에서 가져옴
+const API_BASE_URL = config.apiBaseUrl;
 
 export default function SignInPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [showAuthToast, setShowAuthToast] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
   const { login } = useAuth();
-
-  // OAuth2 리디렉션 처리
-  useEffect(() => {
-    const token = searchParams.get('token');
-    if (token) {
-      login(token);
-      router.push('/dashboard');
-    }
-  }, [searchParams, login, router]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
 
-    // Basic client-side validation (optional, but recommended)
+    // Basic client-side validation
     if (!email || !password) {
       setError("이메일과 비밀번호를 모두 입력해주세요.");
       setLoading(false);
@@ -38,91 +36,142 @@ export default function SignInPage() {
     }
 
     try {
-      const response = await axios.post('http://localhost:8080/api/v1/auth/login', {
+      const response = await axios.post<LoginResponse>(`${API_BASE_URL}/api/v1/auth/login`, {
         email,
         password,
+      }, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        withCredentials: true,
       });
 
-      console.log('Login successful:', response.data);
-
-      // Store the token using the global login function
-      if (response.data.token) {
-        login(response.data.token);
-        // Optional: Store user info as well if needed
-        // localStorage.setItem('userInfo', JSON.stringify(response.data.user));
-
-        // Redirect to dashboard or home page after successful login
-        // TODO: 실제 대시보드 또는 메인 페이지 경로로 변경하세요.
-        router.push('/dashboard'); 
-      } else {
-        // Handle cases where token is missing in the response
-        setError('로그인 응답 형식이 올바르지 않습니다.');
-      }
+      const { token, user } = response.data;
+      await login(token, user);
+      
+      setShowAuthToast(true);
 
     } catch (err: any) {
       console.error('Login failed:', err);
-      if (err.response) {
-        if (err.response.status === 401) {
-          setError("이메일 또는 비밀번호가 일치하지 않습니다.");
-        } else if (err.response.status === 400) {
-          // Try to get more specific message from backend if available
-          setError(err.response.data?.message || "잘못된 요청입니다. 입력값을 확인해주세요.");
+      
+      if (axios.isAxiosError(err)) {
+        if (err.code === 'ERR_NETWORK') {
+          setError('서버에 연결할 수 없습니다. 백엔드 서버가 실행 중인지 확인해주세요.');
+          console.error('Network Error Details:', {
+            message: err.message,
+            code: err.code,
+            config: {
+              url: err.config?.url,
+              method: err.config?.method,
+              headers: err.config?.headers,
+            }
+          });
+        } else if (err.response) {
+          const errorData = err.response.data as ErrorResponse;
+          
+          // API 명세서의 에러 코드에 따른 메시지 표시
+          if (errorData.code && ERROR_MESSAGES[errorData.code]) {
+            setError(ERROR_MESSAGES[errorData.code]);
+          } else {
+            // 기본 에러 메시지
+            switch (err.response.status) {
+              case 401:
+                setError(ERROR_MESSAGES['U004']); // INVALID_CREDENTIALS
+                break;
+              case 404:
+                setError(ERROR_MESSAGES['U003']); // EMAIL_NOT_FOUND
+                break;
+              case 400:
+                setError(errorData.message || ERROR_MESSAGES['C001']); // INVALID_INPUT
+                break;
+              default:
+                setError(`서버 오류 (${err.response.status}): ${errorData.message || '알 수 없는 오류가 발생했습니다.'}`);
+            }
+          }
+        } else if (err.request) {
+          setError('서버로부터 응답이 없습니다. 네트워크 연결을 확인해주세요.');
+          console.error('Request Error Details:', {
+            message: err.message,
+            request: err.request
+          });
         } else {
-          setError(`로그인 오류 발생 (${err.response.status})`);
+          setError('로그인 요청을 보내는 중 오류가 발생했습니다.');
+          console.error('Error Details:', err);
         }
-      } else if (err.request) {
-        // Network error (server down, CORS etc.)
-        setError("서버에 연결할 수 없습니다. 네트워크를 확인해주세요.");
       } else {
-        // Other errors
-        setError("로그인 중 예상치 못한 오류가 발생했습니다.");
+        setError('예상치 못한 오류가 발생했습니다.');
+        console.error('Unexpected Error:', err);
       }
+
+      setShowAuthToast(true);
     } finally {
       setLoading(false);
     }
   };
 
-  // 소셜 로그인 핸들러 수정
+  // OAuth2 리디렉션 처리
+  useEffect(() => {
+    const token = searchParams.get('token');
+    if (token) {
+      // OAuth2 로그인의 경우 사용자 정보를 가져와야 함
+      axios.get(`${API_BASE_URL}/api/v1/auth/me`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      }).then(response => {
+        login(token, response.data);
+        router.push('/dashboard');
+      }).catch(err => {
+        console.error('Failed to fetch user info:', err);
+        setError('사용자 정보를 가져오는데 실패했습니다.');
+      });
+    }
+  }, [searchParams, login, router]);
+
+  // 소셜 로그인 핸들러
   const handleSocialLogin = async (provider: 'google' | 'kakao') => {
     setLoading(true);
     setError(null);
 
     try {
-      console.log(`${provider} 로그인 URL 요청 시작...`);
-      
-      const response = await fetch(`/api/v1/auth/oauth2/${provider}`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/auth/oauth2/${provider}`, {
         method: 'GET',
         headers: {
           'Accept': 'application/json'
         }
       });
 
-      console.log(`${provider} 로그인 URL 응답 상태:`, response.status);
-
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`${provider} 로그인 URL 응답 에러:`, errorText);
-        throw new Error(`서버 응답 오류 (${response.status}): ${errorText || '알 수 없는 오류'}`);
+        const errorData = await response.json() as ErrorResponse;
+        throw new Error(errorData.message || `${provider} 로그인을 시작하는데 실패했습니다.`);
       }
 
       const data = await response.json();
-      console.log(`${provider} 로그인 URL 응답 데이터:`, data);
       
       if (!data.url) {
         throw new Error(`${provider} 로그인 URL을 찾을 수 없습니다.`);
       }
 
-      console.log(`리디렉션 URL:`, data.url);
+      // 소셜 로그인 URL로 리다이렉트
       window.location.href = data.url;
     } catch (err: any) {
       console.error(`${provider} 로그인 리디렉션 실패:`, err);
       setError(err.message || `${provider} 로그인을 시작하는데 실패했습니다. 잠시 후 다시 시도해주세요.`);
       setLoading(false);
+
+      setShowAuthToast(true);
     }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-100 via-white to-gray-100 dark:from-gray-800 dark:via-gray-900 dark:to-black py-12 px-4 sm:px-6 lg:px-8">
+      {showAuthToast && (
+        <AuthToast
+          type="signin"
+          onClose={() => setShowAuthToast(false)}
+        />
+      )}
       <div className="max-w-md w-full space-y-8 bg-white dark:bg-gray-800 p-8 sm:p-10 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700">
         <div className="flex justify-center">
           {/* Assuming you have a logo */}

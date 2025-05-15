@@ -3,9 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
+    "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "build:dev": "NEXT_PUBLIC_ENV=development next build",
+    "start:dev": "NEXT_PUBLIC_ENV=development next start",
+    "build:prod": "NEXT_PUBLIC_ENV=production next build",
+    "start:prod": "NEXT_PUBLIC_ENV=production next start",
     "lint": "next lint"
   },
   "dependencies": {
