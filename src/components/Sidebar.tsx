@@ -8,6 +8,18 @@ import Image from 'next/image';
 const navigationItems = [
   { name: 'Dashboard', path: '/dashboard', icon: '/icons/dashboard.svg' },
   { name: 'Chart', path: '/chart', icon: '/icons/chart.svg' },
+  
+  // Bot Pages
+  { name: 'BinanceBot', path: '/bots/binance', icon: '/icons/bot.svg' },
+  { name: 'UpbitBot', path: '/bots/upbit', icon: '/icons/bot.svg' },
+  { name: 'BithumbBot', path: '/bots/bithumb', icon: '/icons/bot.svg' },
+  
+  // Backtest Page
+  { name: 'Backtest', path: '/backtest', icon: '/icons/backtest.svg' },
+  
+  // Board Page
+  { name: 'Board', path: '/board', icon: '/icons/news.svg' },
+
   { name: 'Transactions', path: '/transactions', icon: '/icons/transaction.svg' },
   { name: 'Wallet', path: '/wallet', icon: '/icons/wallet.svg' },
   { name: 'News', path: '/news', icon: '/icons/news.svg' },

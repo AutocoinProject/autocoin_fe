@@ -1,66 +1,130 @@
 "use client";
 
-import React, { createContext, useState, useContext, useEffect, ReactNode, useCallback } from 'react';
-import { toast } from 'sonner';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
+import axios from 'axios';
+import { LoginResponse, ErrorResponse, ERROR_MESSAGES } from '@/types/auth';
+import config from '@/config/environment';
 
-// 1. 컨텍스트 타입 정의
-interface AuthContextType {
-  isLoggedIn: boolean;
-  login: (token: string) => void;
-  logout: () => void;
+interface UserInfo {
+  id: string;
+  email: string;
+  username?: string;
 }
 
-// 2. 컨텍스트 생성 (기본값은 undefined 또는 적절한 초기값 설정)
+interface AuthContextType {
+  user: UserInfo | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  error: string | null;
+  login: (token: string, user: UserInfo) => void;
+  logout: () => void;
+  checkAuth: () => Promise<void>;
+}
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// 3. 컨텍스트 제공자(Provider) 컴포넌트 생성
-interface AuthProviderProps {
-  children: ReactNode;
-}
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [user, setUser] = useState<UserInfo | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
-export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
-
-  // 컴포넌트 마운트 시 localStorage 확인 (기존 Topbar 로직 이동)
-  useEffect(() => {
-    const token = localStorage.getItem('accessToken');
-    if (token) {
-      setIsLoggedIn(true);
+  // 토큰으로 사용자 정보 가져오기
+  const fetchUserInfo = useCallback(async (token: string) => {
+    try {
+      const response = await axios.get<UserInfo>(`${config.apiBaseUrl}/api/v1/auth/me`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      setUser(response.data);
+      setIsAuthenticated(true);
+      setError(null);
+      localStorage.setItem('user', JSON.stringify(response.data));
+    } catch (err) {
+      if (axios.isAxiosError(err) && err.response) {
+        const errorData = err.response.data as ErrorResponse;
+        if (errorData.code && ERROR_MESSAGES[errorData.code]) {
+          setError(ERROR_MESSAGES[errorData.code]);
+        } else {
+          setError('사용자 정보를 가져오는데 실패했습니다.');
+        }
+      }
+      setUser(null);
+      setIsAuthenticated(false);
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
     }
   }, []);
 
-  // 로그인 함수
-  const login = useCallback((token: string) => {
-    localStorage.setItem('accessToken', token);
-    setIsLoggedIn(true);
-    // 로그인 성공 알림 (선택 사항)
-    // toast.success("로그인 되었습니다."); 
+  // 인증 상태 확인
+  const checkAuth = useCallback(async () => {
+    const token = localStorage.getItem('token');
+    const savedUser = localStorage.getItem('user');
+    
+    if (token && savedUser) {
+      try {
+        const userData = JSON.parse(savedUser) as UserInfo;
+        setUser(userData);
+        setIsAuthenticated(true);
+        // 토큰 유효성 검사를 위해 사용자 정보 다시 가져오기
+        await fetchUserInfo(token);
+      } catch (err) {
+        console.error('저장된 사용자 정보 파싱 실패:', err);
+        localStorage.removeItem('user');
+        setUser(null);
+        setIsAuthenticated(false);
+      }
+    } else {
+      setUser(null);
+      setIsAuthenticated(false);
+    }
+    setIsLoading(false);
+  }, [fetchUserInfo]);
+
+  // 로그인
+  const login = useCallback((token: string, userData: UserInfo) => {
+    localStorage.setItem('token', token);
+    localStorage.setItem('user', JSON.stringify(userData));
+    setUser(userData);
+    setIsAuthenticated(true);
   }, []);
 
-  // 로그아웃 함수 (기존 Topbar 로직 + 알림)
+  // 로그아웃
   const logout = useCallback(() => {
-    localStorage.removeItem('accessToken');
-    setIsLoggedIn(false);
-    toast.success("로그아웃 되었습니다.");
-    // 필요시 추가 처리 (예: 로그인 페이지로 리다이렉트)
-    // router.push('/signin'); // Context에서는 router 직접 사용 어려움. 필요시 props나 다른 방식 사용
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    setUser(null);
+    setIsAuthenticated(false);
   }, []);
 
-  // Provider가 제공할 값
-  const value = { isLoggedIn, login, logout };
+  // 초기 인증 상태 확인
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
 
   return (
-    <AuthContext.Provider value={value}>
+    <AuthContext.Provider value={{
+      user,
+      isAuthenticated,
+      isLoading,
+      error,
+      login,
+      logout,
+      checkAuth
+    }}>
       {children}
     </AuthContext.Provider>
   );
-};
+}
 
-// 4. 커스텀 훅 생성 (쉽게 컨텍스트 사용하기 위함)
-export const useAuth = (): AuthContextType => {
+export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
-}; 
+} 

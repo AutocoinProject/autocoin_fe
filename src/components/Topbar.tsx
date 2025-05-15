@@ -7,7 +7,7 @@ import { Toaster, toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function Topbar() {
-  const { isLoggedIn, logout } = useAuth();
+  const { isAuthenticated: isLoggedIn, user, logout } = useAuth();
   const [theme, setTheme] = useState('light');
 
   const toggleTheme = () => {
@@ -45,15 +45,25 @@ export default function Topbar() {
         <div className="flex items-center space-x-4">
           {isLoggedIn ? (
             <>
+              <div className="flex items-center space-x-2 mr-2">
+                <div className="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center text-white">
+                  {user?.nickname?.[0]?.toUpperCase() || 'U'}
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                    {user?.nickname || '사용자'}
+                  </span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                    {user?.email || ''}
+                  </span>
+                </div>
+              </div>
               <button 
                 onClick={logout}
                 className="px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
               >
                 로그아웃
               </button>
-              <div className="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center text-white cursor-pointer">
-                U
-              </div>
             </>
           ) : (
             <>

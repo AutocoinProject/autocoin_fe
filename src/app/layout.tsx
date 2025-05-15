@@ -4,6 +4,7 @@ import "../styles/globals.css";
 import Sidebar from "@/components/Sidebar";
 import Topbar from "@/components/Topbar";
 import { AuthProvider } from "@/contexts/AuthContext";
+import PageTransitionWrapper from "@/components/PageTransitionWrapper";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -26,9 +27,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-50 dark:bg-gray-900`}
+        suppressHydrationWarning
       >
         <AuthProvider>
           <div className="flex h-screen overflow-hidden">
@@ -36,7 +38,9 @@ export default function RootLayout({
             <div className="flex flex-col flex-1 overflow-hidden">
               <Topbar />
               <main className="flex-1 overflow-y-auto p-4 md:p-6">
-                {children}
+                <PageTransitionWrapper>
+                  {children}
+                </PageTransitionWrapper>
               </main>
             </div>
           </div>
