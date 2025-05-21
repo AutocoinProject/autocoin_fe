@@ -26,6 +26,7 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true // 빌드 중에는 TypeScript 검사 무시
   },
+  // experimental turbo 설정 제거
   experimental: {},
   async rewrites() {
     const apiUrl = getApiUrl();
@@ -45,4 +46,4 @@ const nextConfig = {
   },
 };
 
-module.exports = nextConfig; 
+module.exports = nextConfig;
