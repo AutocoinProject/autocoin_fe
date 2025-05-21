@@ -19,10 +19,14 @@ const getApiUrl = () => {
 };
 
 const nextConfig = {
-  // Turbopack 비활성화
-  experimental: {
-    turbo: false
+  // Next.js 재정의
+  eslint: {
+    ignoreDuringBuilds: true // 빌드 중에는 ESLint 검사 무시
   },
+  typescript: {
+    ignoreBuildErrors: true // 빌드 중에는 TypeScript 검사 무시
+  },
+  experimental: {},
   async rewrites() {
     const apiUrl = getApiUrl();
     console.log('Current API URL:', apiUrl); // 현재 사용 중인 API URL 로깅

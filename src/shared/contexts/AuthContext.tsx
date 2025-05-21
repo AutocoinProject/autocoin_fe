@@ -24,6 +24,7 @@ interface AuthContextType {
   login: (token: string, user?: UserInfo) => void;
   logout: () => void;
   checkAuth: () => Promise<void>;
+  updateUser: (userData: UserInfo) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -152,6 +153,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     checkAuth();
   }, [checkAuth]);
 
+  // 사용자 정보 업데이트 함수
+  const updateUser = useCallback((userData: UserInfo) => {
+    setUser(userData);
+    localStorage.setItem('user', JSON.stringify(userData));
+  }, []);
+
   return (
     <AuthContext.Provider value={{
       user,
@@ -160,7 +167,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       error,
       login,
       logout,
-      checkAuth
+      checkAuth,
+      updateUser
     }}>
       {children}
     </AuthContext.Provider>

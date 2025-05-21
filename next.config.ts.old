@@ -1,0 +1,9 @@
+// This file is no longer used - see next.config.js instead
+// Backup of original next.config.ts
+import type { NextConfig } from "next";
+
+const nextConfig: NextConfig = {
+  /* config options here */
+};
+
+export default nextConfig;

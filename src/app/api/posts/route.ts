@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from 'uuid'; // For generating unique IDs and filenames
 
 // 가상 데이터베이스 또는 S3 스토리지 대신 사용할 임시 저장소 (데모용)
 // 실제 프로덕션 환경에서는 DB (PostgreSQL, MongoDB 등)를 사용해야 합니다.
-let posts: any[] = [];
+const posts: Record<string, unknown>[] = [];
 
 interface CreatePostResponse {
   id: number;
@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Error creating post:', error);
-    let errorMessage = '서버 내부 오류가 발생했습니다.';
+    const errorMessage = '서버 내부 오류가 발생했습니다.';
     // 에러 타입에 따른 분기 가능
     // if (error instanceof SomeSpecificError) { errorMessage = '특정 오류 메시지'; }
     return NextResponse.json(

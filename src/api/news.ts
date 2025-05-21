@@ -1,7 +1,7 @@
 import axios, { AxiosResponse } from 'axios';
 import config from '@/config/environment';
 import { 
-  News, 
+  // News 제거 (사용되지 않음)
   NewsListResponse, 
   NewsDetail, 
   NewsSearchParams, 
@@ -121,8 +121,8 @@ export const fetchNewsDetail = async (newsId: number): Promise<NewsDetail> => {
     if (axios.isAxiosError(error)) {
       console.warn('뉴스 상세 API 오류로 더미 데이터를 사용합니다:', error.response?.status);
       // 재귀 호출로 더미 데이터 반환
-      const originalUseMock = USE_MOCK_DATA;
       // 임시로 USE_MOCK_DATA를 true로 만들어 재귀 호출
+      // originalUseMock 사용하지 않음 - 제거
       return fetchNewsDetail(newsId);
     }
     

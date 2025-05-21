@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, ChangeEvent, useEffect } from 'react';
+import { useState } from 'react';
 import dynamic from 'next/dynamic';
 import Select, { MultiValue } from 'react-select';
 
@@ -20,7 +20,7 @@ interface StrategyOption {
 }
 
 // 각 전략별 파라미터 타입 (입력 관리용)
-interface StrategyParams {
+interface StrategyParams extends Record<string, unknown> {
   RSI?: { length?: number | string };
   MACD?: { fast_period?: number | string; slow_period?: number | string; signal_period?: number | string };
   SMA?: { length?: number | string };
@@ -84,8 +84,8 @@ interface BacktestTestRunResponse {
 
 // Plotly 데이터 타입
 interface PlotlyData {
-  data: any[];
-  layout: any;
+  data: unknown[];
+  layout: Record<string, unknown>;
 }
 
 // 사용 가능한 전략 목록 및 파라미터 정의
@@ -186,6 +186,7 @@ export default function BacktestPage() {
   const [error, setError] = useState<string | null>(null);
   const [backtestResults, setBacktestResults] = useState<BacktestResultData | null>(null);
   const [plotData, setPlotData] = useState<PlotlyData | null>(null);
+  // state 변수 제거 - 사용되지 않음
 
   // --- 로컬 스토리지 연동 (API 키 관련 로직 제거) ---
   // useEffect(() => { ... }, []); // API 키 로딩 로직 제거
@@ -408,23 +409,23 @@ export default function BacktestPage() {
   const smallButtonStyle = "px-2 py-1 text-xs bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors";
   // react-select 스타일 수정 (메뉴/옵션 배경 제거)
   const selectStyles = {
-    control: (base: any) => ({ ...base, backgroundColor: 'var(--select-bg)', borderColor: 'var(--select-border)' }),
-    menu: (base: any) => ({ 
+    control: (base: Record<string, unknown>) => ({ ...base, backgroundColor: 'var(--select-bg)', borderColor: 'var(--select-border)' }),
+    menu: (base: Record<string, unknown>) => ({ 
       ...base, 
       zIndex: 9999 
     }),
-    menuPortal: (base: any) => ({ 
+    menuPortal: (base: Record<string, unknown>) => ({ 
       ...base, 
       zIndex: 9999 
     }),
-    option: (base: any, state: { isSelected: boolean; isFocused: boolean; }) => ({
+    option: (base: Record<string, unknown>, state: { isSelected: boolean; isFocused: boolean; }) => ({
       ...base,
     }),
-    multiValue: (base: any) => ({ ...base, backgroundColor: 'var(--select-multivalue-bg)' }),
-    multiValueLabel: (base: any) => ({ ...base, color: 'var(--select-multivalue-label-color)' }),
-    multiValueRemove: (base: any) => ({ ...base, color: 'var(--select-multivalue-remove-color)', ':hover': { backgroundColor: 'var(--select-multivalue-remove-hover-bg)', color: 'var(--select-multivalue-remove-hover-color)' } }),
-    input: (base: any) => ({ ...base, color: 'var(--select-input-color)' }),
-    singleValue: (base: any) => ({ ...base, color: 'var(--select-singlevalue-color)' }),
+    multiValue: (base: Record<string, unknown>) => ({ ...base, backgroundColor: 'var(--select-multivalue-bg)' }),
+    multiValueLabel: (base: Record<string, unknown>) => ({ ...base, color: 'var(--select-multivalue-label-color)' }),
+    multiValueRemove: (base: Record<string, unknown>) => ({ ...base, color: 'var(--select-multivalue-remove-color)', ':hover': { backgroundColor: 'var(--select-multivalue-remove-hover-bg)', color: 'var(--select-multivalue-remove-hover-color)' } }),
+    input: (base: Record<string, unknown>) => ({ ...base, color: 'var(--select-input-color)' }),
+    singleValue: (base: Record<string, unknown>) => ({ ...base, color: 'var(--select-singlevalue-color)' }),
   };
 
   // --- JSX ---

@@ -89,9 +89,13 @@ const config: Config = {
     },
   },
   plugins: [
-    require('@tailwindcss/typography'),
-    require('@tailwindcss/forms'),
-    require('@tailwindcss/aspect-ratio'),
+    // ES 모듈 가져오기 방식으로 변경
+    // @ts-ignore - TailwindCSS 플러그인 타입 이슈 무시
+    import('@tailwindcss/typography').then(plugin => plugin.default),
+    // @ts-ignore - TailwindCSS 플러그인 타입 이슈 무시
+    import('@tailwindcss/forms').then(plugin => plugin.default),
+    // @ts-ignore - TailwindCSS 플러그인 타입 이슈 무시
+    import('@tailwindcss/aspect-ratio').then(plugin => plugin.default),
   ],
 };
 

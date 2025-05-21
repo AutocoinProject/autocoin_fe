@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/shared/contexts/AuthContext';
 import axios from 'axios';
-import config from '@/config/environment';
+import config from '@/shared/config/environment';
 
 interface UserProfile {
   id: number;

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import config from '@/config/environment';
+import config from '@/shared/config/environment';
 
 interface SystemSettings {
   general: {
@@ -1055,7 +1055,7 @@ function EmailTemplateModal({ template, onSave, onClose }: EmailTemplateModalPro
                 className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white sm:text-sm"
               />
               <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                사용 가능한 변수: {{username}}, {{email}}, {{reset_link}}, {{symbol}}, {{amount}}, {{type}}
+                사용 가능한 변수: {'{username}'}, {'{email}'}, {'{reset_link}'}, {'{symbol}'}, {'{amount}'}, {'{type}'}
               </p>
             </div>
 

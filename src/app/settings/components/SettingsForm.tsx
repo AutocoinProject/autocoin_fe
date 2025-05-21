@@ -33,13 +33,20 @@ export default function SettingsForm({}: SettingsFormProps) {
       
       if (name.includes('.')) {
         const [section, key] = name.split('.');
-        setFormData(prev => ({
-          ...prev,
-          [section]: {
-            ...prev[section as keyof typeof prev],
-            [key]: checkbox.checked
-          }
-        }));
+        setFormData(prev => {
+          const sectionData = prev[section as keyof typeof prev];
+          
+          // 섹션 데이터가 객체인지 확인
+          // 객체가 아니면 빈 객체를 사용
+          const newSectionData = typeof sectionData === 'object' && sectionData !== null
+            ? { ...sectionData, [key]: checkbox.checked }
+            : { [key]: checkbox.checked };
+          
+          return {
+            ...prev,
+            [section]: newSectionData
+          };
+        });
       } else {
         setFormData(prev => ({
           ...prev,

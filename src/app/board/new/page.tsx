@@ -76,7 +76,8 @@ export default function NewPostPage() {
       formData.append('file', file);
     }
 
-    const apiUrl = 'http://localhost:8080/api/v1/posts'; 
+    // apiUrl 변수 제거 - 사용하지 않음
+    // const apiUrl = 'http://localhost:8080/api/v1/posts'; 
 
     try {
       await createPost({

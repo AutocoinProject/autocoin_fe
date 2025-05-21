@@ -2,7 +2,8 @@
 
 import { useState } from 'react'; // Import useState
 import Link from 'next/link'; // Import Link
-import { toast } from 'sonner';
+// toast 임포트 제거 - 사용하지 않음
+// import { toast } from 'sonner';
 
 // 하드코딩된 카테고리 목록
 const CATEGORIES = [
@@ -59,7 +60,7 @@ export default function BoardPage() {
           {CATEGORIES.find(cat => cat.id === selectedCategory)?.name || '전체 게시글'}
         </h2>
         <p className="text-gray-700 dark:text-gray-300">
-          현재 선택된 카테고리는 '{CATEGORIES.find(cat => cat.id === selectedCategory)?.name}' 입니다.
+          현재 선택된 카테고리는 &apos;{CATEGORIES.find(cat => cat.id === selectedCategory)?.name}&apos; 입니다.
           이곳에 해당 카테고리의 글 목록을 불러와 표시할 예정입니다.
         </p>
       </div>
