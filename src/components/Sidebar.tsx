@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
 import Image from 'next/image';
 
 const navigationItems = [
@@ -24,12 +25,15 @@ const navigationItems = [
   { name: 'Wallet', path: '/wallet', icon: '/icons/wallet.svg' },
   { name: 'News', path: '/news', icon: '/icons/news.svg' },
   { name: 'Mailbox', path: '/mailbox', icon: '/icons/mail.svg' },
+  { name: 'Manage', path: '/manage', icon: '/icons/manage.svg', adminOnly: true },
+  { name: 'Profile', path: '/profile', icon: '/icons/settings.svg' },
   { name: 'Settings', path: '/settings', icon: '/icons/settings.svg' },
 ];
 
 export default function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const pathname = usePathname();
+  const { user } = useAuth();
 
   return (
     <aside className={`bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transition-all ${
@@ -65,38 +69,63 @@ export default function Sidebar() {
         </div>
         <nav className="flex-1 overflow-y-auto py-4">
           <ul className="space-y-1 px-2">
-            {navigationItems.map((item) => {
-              const isActive = pathname === item.path;
-              return (
-                <li key={item.name}>
-                  <Link
-                    href={item.path}
-                    className={`flex items-center p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${
-                      isActive
-                        ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400'
-                        : 'text-gray-600 dark:text-gray-300'
-                    }`}
-                  >
-                    <Image src={item.icon} alt={`${item.name} icon`} width={20} height={20} />
-                    {!collapsed && <span className="ml-3">{item.name}</span>}
-                  </Link>
-                </li>
-              );
-            })}
+            {navigationItems
+              .filter(item => {
+                // 관리자 전용 메뉴는 관리자가 아니면 숨김
+                if (item.adminOnly) {
+                  // 임시로 모든 사용자에게 manage 페이지 접근 허용 (테스트용)
+                  return true;
+                  // return user && (user.role === 'ADMIN' || user.role === 'ROLE_ADMIN');
+                }
+                return true;
+              })
+              .map((item) => {
+                const isActive = pathname === item.path;
+                return (
+                  <li key={item.name}>
+                    <Link
+                      href={item.path}
+                      className={`flex items-center p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${
+                        isActive
+                          ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400'
+                          : 'text-gray-600 dark:text-gray-300'
+                      }${
+                        item.adminOnly ? ' border-l-4 border-red-500' : ''
+                      }`}
+                    >
+                      <Image src={item.icon} alt={`${item.name} icon`} width={20} height={20} />
+                      {!collapsed && (
+                        <span className="ml-3">
+                          {item.name}
+                          {item.adminOnly && (
+                            <span className="ml-2 text-xs bg-red-500 text-white px-1 rounded">
+                              Manage
+                            </span>
+                          )}
+                        </span>
+                      )}
+                    </Link>
+                  </li>
+                );
+              })}
           </ul>
         </nav>
         <div className="p-4 border-t border-gray-200 dark:border-gray-700">
-          <div className="flex items-center">
+          <Link href="/profile" className="flex items-center hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg p-2 transition-colors">
             <div className="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center text-white">
-              U
+              {user?.username?.[0]?.toUpperCase() || 'U'}
             </div>
             {!collapsed && (
               <div className="ml-3">
-                <p className="text-sm font-medium text-gray-700 dark:text-gray-200">User Name</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">user@example.com</p>
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                  {user?.username || '사용자'}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {user?.email || 'user@example.com'}
+                </p>
               </div>
             )}
-          </div>
+          </Link>
         </div>
       </div>
     </aside>

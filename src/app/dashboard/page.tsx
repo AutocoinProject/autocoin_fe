@@ -1,14 +1,51 @@
-import React from 'react';
+'use client';
+
+import React, { useEffect } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 import CoinCard from './components/CoinCard';
 import PortfolioCard from './components/PortfolioCard';
 import CreditCard from './components/CreditCard';
 import ChartCard from './components/ChartCard';
 import LiveMarketTable from './components/LiveMarketTable';
+import AuthDebug from '@/components/AuthDebug';
+
+// 디버그 도구 로드
+if (typeof window !== 'undefined') {
+  import('@/lib/oauthDebug');
+}
 
 export default function DashboardPage() {
+  const { user } = useAuth();
+  
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return '안녕하세요';
+    if (hour < 18) return '안녕하세요';
+    return '안녕하세요';
+  };
+
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-gray-800 dark:text-white">Dashboard</h1>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-800 dark:text-white">
+            {user ? `${getGreeting()}, ${user.username}님!` : 'Dashboard'}
+          </h1>
+          {user && (
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              오늘도 좋은 카지노 운영을 위해 노력하고 계시네요!
+            </p>
+          )}
+        </div>
+        {user?.provider === 'kakao' && (
+          <div className="flex items-center space-x-2 text-sm text-yellow-600 dark:text-yellow-400">
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 3c7.8 0 11 3.2 11 7 0 4.8-4.2 8-11 8-.8 0-1.6 0-2.4-.2L5 21l2.4-3c-3-2-4.4-4.8-4.4-8 0-3.8 3.2-7 11-7z"/>
+            </svg>
+            <span>카카오로 로그인한 사용자</span>
+          </div>
+        )}
+      </div>
       
       {/* First row - Coin cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -74,6 +111,9 @@ export default function DashboardPage() {
           <LiveMarketTable />
         </div>
       </div>
+      
+      {/* 디버깅 컴포넌트 */}
+      <AuthDebug />
     </div>
   );
 }

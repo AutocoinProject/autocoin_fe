@@ -5,11 +5,46 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Toaster, toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
+import axios from 'axios';
+import config from '@/config/environment';
 
 export default function Topbar() {
   const { isAuthenticated: isLoggedIn, user, logout } = useAuth();
   const [theme, setTheme] = useState('light');
+  const [serverStatus, setServerStatus] = useState<'online' | 'offline' | 'checking'>('checking');
+  const [lastChecked, setLastChecked] = useState<Date | null>(null);
 
+  // 디버깅용 로그
+  useEffect(() => {
+    console.log('Topbar auth state:', { isLoggedIn, user });
+  }, [isLoggedIn, user]);
+
+  // 백엔드 서버 연결 상태 확인
+  const checkServerStatus = async () => {
+    setServerStatus('checking');
+    try {
+      // 서버 건강 상태 확인 - /api/health 경로로 수정
+      const response = await axios.get(`${config.apiBaseUrl}/api/health`, { timeout: 5000 });
+      setServerStatus('online');
+      console.log('Server is online:', response.data);
+    } catch (error) {
+      setServerStatus('offline');
+      console.error('Server connection error:', error);
+    }
+    setLastChecked(new Date());
+  };
+
+  // 컴포넌트 로드 시 및 30초마다 서버 상태 확인
+  useEffect(() => {
+    checkServerStatus();
+    
+    const interval = setInterval(() => {
+      checkServerStatus();
+    }, 100000); // 100초마다 상태 확인
+    
+    return () => clearInterval(interval);
+  }, []);
+  
   const toggleTheme = () => {
     const newTheme = theme === 'light' ? 'dark' : 'light';
     setTheme(newTheme);
@@ -43,21 +78,34 @@ export default function Topbar() {
         </div>
         
         <div className="flex items-center space-x-4">
+          {/* 서버 상태 표시 */}
+          <div className="flex items-center mr-2" 
+            title={`서버 상태: ${serverStatus === 'online' ? '온라인' : serverStatus === 'offline' ? '오프라인' : '확인 중'}
+${lastChecked ? `마지막 확인: ${lastChecked.toLocaleTimeString()}` : ''}`}
+            onClick={checkServerStatus}
+            style={{ cursor: 'pointer' }}
+          >
+            <div className={`h-3 w-3 rounded-full mr-1 ${serverStatus === 'online' ? 'bg-green-500' : serverStatus === 'offline' ? 'bg-red-500' : 'bg-yellow-500'}`}></div>
+            <span className="text-xs font-medium">
+              {serverStatus === 'online' ? '서버 연결됨' : serverStatus === 'offline' ? '서버 연결 안됨' : '서버 확인 중'}
+            </span>
+          </div>
+          
           {isLoggedIn ? (
             <>
-              <div className="flex items-center space-x-2 mr-2">
+              <Link href="/profile" className="flex items-center space-x-2 mr-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg p-2 transition-colors">
                 <div className="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center text-white">
-                  {user?.nickname?.[0]?.toUpperCase() || 'U'}
+                  {user?.username?.[0]?.toUpperCase() || 'U'}
                 </div>
                 <div className="flex flex-col">
                   <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
-                    {user?.nickname || '사용자'}
+                    {user?.username || '사용자'}
                   </span>
                   <span className="text-xs text-gray-500 dark:text-gray-400">
                     {user?.email || ''}
                   </span>
                 </div>
-              </div>
+              </Link>
               <button 
                 onClick={logout}
                 className="px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"

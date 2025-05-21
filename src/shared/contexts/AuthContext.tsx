@@ -3,8 +3,8 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
-import { LoginResponse, ErrorResponse, ERROR_MESSAGES } from '@/types/auth';
-import config from '@/config/environment';
+import { LoginResponse, ErrorResponse, ERROR_MESSAGES } from '@/shared/types/auth';
+import config from '@/shared/config/environment';
 
 interface UserInfo {
   id: number;

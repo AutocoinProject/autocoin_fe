@@ -2,7 +2,7 @@
 
 import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Toast from '@/components/ui/Toast';
+import Toast from '@/shared/components/ui/Toast';
 
 interface AuthToastProps {
   type: 'signin' | 'signup' | 'custom';
@@ -64,7 +64,7 @@ const AuthToast: React.FC<AuthToastProps> = ({
           return '';
       }
     }
-  }; // 이 중괄호가 빠져있었습니다
+  }; 
 
   return (
     <Toast
