@@ -19,20 +19,18 @@ const getApiUrl = () => {
 };
 
 const nextConfig = {
-  // Next.js 재정의
+  // 빌드 시 ESLint 및 TypeScript 오류 무시
   eslint: {
-    ignoreDuringBuilds: true // 빌드 중에는 ESLint 검사 무시
+    ignoreDuringBuilds: true
   },
   typescript: {
-    ignoreBuildErrors: true // 빌드 중에는 TypeScript 검사 무시
+    ignoreBuildErrors: true
   },
-  // experimental turbo 설정 제거
-  experimental: {},
+  // 리디렉션 및 리라이트 설정
   async rewrites() {
     const apiUrl = getApiUrl();
-    console.log('Current API URL:', apiUrl); // 현재 사용 중인 API URL 로깅
+    console.log('Current API URL:', apiUrl);
 
-    // CORS 이슈를 해결하기 위한 프록시 설정
     return [
       {
         source: '/api/:path*',
